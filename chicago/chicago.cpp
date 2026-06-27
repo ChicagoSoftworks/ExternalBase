@@ -55,7 +55,7 @@ int main() {
         for (size_t i = 0; i < pcache.count(); i++)
             printf("");
     }
-    //loglib::log("dm @ 0x%llx\n", dm);
+    loglib::log("dm @ 0x%llx\n", dm); // we MUST know the datamodel address
     if (dm) {
         overlay::init([&] {
             if (tp_flag.exchange(false))
