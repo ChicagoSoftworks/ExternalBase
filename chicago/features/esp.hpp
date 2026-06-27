@@ -13,6 +13,7 @@ inline bool corner = false;
 inline bool name = true;
 inline bool distance = false;
 inline bool localplayer = false;
+inline bool teamcheck = false;
 inline float box_color[4] = { 1.0f, 0.0f, 0.0f, 1.0f };
 inline float name_color[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
 inline void text_outline(ImDrawList* dl, float x, float y, ImU32 col, const char* text) {
@@ -24,15 +25,24 @@ inline void text_outline(ImDrawList* dl, float x, float y, ImU32 col, const char
     dl->AddText(ImVec2(x, y), col, text);
 }
 
-inline void draw_boxes(HANDLE proc, player_cache& pcache, vec2 dims, matrix4 view) {
+inline void draw_boxes(HANDLE proc, player_cache& pcache, vec2 dims, matrix4 view, uint64_t team_off = 0) {
     ImDrawList* dl = ImGui::GetForegroundDrawList();
     ImU32 black = IM_COL32(0, 0, 0, 255);
 
     pcache.refresh();
     auto list = pcache.list;
 
+    uint64_t local_team = 0;
+    if (teamcheck && team_off && pcache.local_addr)
+        ReadProcessMemory(proc, (LPCVOID)(pcache.local_addr + team_off), &local_team, 8, nullptr);
+
     for (size_t i = 0; i < list.size(); i++) {
         if (!localplayer && pcache.is_local(i)) continue;
+        if (teamcheck && team_off) {
+            uint64_t t = 0;
+            ReadProcessMemory(proc, (LPCVOID)(list[i].address + team_off), &t, 8, nullptr);
+            if (t && t == local_team) continue;
+        }
 
         auto addr = list[i].address;
         float left, top, right, bottom;
@@ -128,6 +138,7 @@ inline void render_menu(player_cache& pcache) {
             ImGui::Checkbox("name", &name);
             ImGui::Checkbox("distance", &distance);
             ImGui::Checkbox("localplayer", &localplayer);
+            ImGui::Checkbox("teamcheck", &teamcheck);
             ImGui::ColorEdit4("box color", box_color);
             ImGui::ColorEdit4("name color", name_color);
             ImGui::EndTabItem();

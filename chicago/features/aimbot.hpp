@@ -28,6 +28,7 @@ inline bool prediction = false;
 inline float pred_x = 10.0f;
 inline float pred_y = 10.0f;
 inline bool sticky_target = true;
+inline bool teamcheck = false;
 
 }
 
@@ -137,6 +138,10 @@ struct aimbot_handler {
 
             uint64_t local = get_local_player(proc, dm, ioffs, eoffs.LocalPlayer);
 
+            uint64_t local_team = 0;
+            if (aimbot::teamcheck && local)
+                ReadProcessMemory(proc, (LPCVOID)(local + offs->Player.Team), &local_team, 8, nullptr);
+
             auto try_get_pos = [&](uint64_t addr, vec3& o) -> bool {
                 return get_target_pos(proc, addr, ioffs, eoffs, o);
             };
@@ -167,6 +172,11 @@ struct aimbot_handler {
 
             for (size_t i = 0; i < players.size(); i++) {
                 if (players[i].address == local) continue;
+                if (aimbot::teamcheck) {
+                    uint64_t t = 0;
+                    ReadProcessMemory(proc, (LPCVOID)(players[i].address + offs->Player.Team), &t, 8, nullptr);
+                    if (t && t == local_team) continue;
+                }
                 if (aimbot::sticky_target && sticky_idx >= 0 && (int)i == sticky_idx) continue;
                 vec3 wp;
                 if (!try_get_pos(players[i].address, wp)) continue;
@@ -298,6 +308,7 @@ inline void render_tab() {
         ImGui::SliderFloat("pred y", &pred_y, 0.f, 20.f, "%.0f");
     }
     ImGui::Checkbox("sticky target", &sticky_target);
+    ImGui::Checkbox("teamcheck", &teamcheck);
     ImGui::Checkbox("show fov", &show_fov);
     if (show_fov) {
         ImGui::SliderFloat("fov size", &fov_size, 10.f, 500.f, "%.0f");

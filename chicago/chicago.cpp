@@ -65,7 +65,7 @@ int main() {
             ReadProcessMemory(proc, (LPCVOID)(pcache.ve + pcache.eoffs.Dimensions), &dims, 8, nullptr);
             ReadProcessMemory(proc, (LPCVOID)(pcache.ve + pcache.eoffs.ViewMatrix), &view, 64, nullptr);
             if (esp::enabled)
-                esp::draw_boxes(proc, pcache, dims, view);
+                esp::draw_boxes(proc, pcache, dims, view, offs.Player.Team);
             aimbot::draw_fov(dims);
             if (overlay::menu)
                 esp::render_menu(pcache);
