@@ -5,7 +5,7 @@
   <img src="https://github.com/ChicagoSoftworks/Assets/blob/main/icons/transparent_cropped.png?raw=true" alt="preview" width="230" />
 </div>
 <div align="center">
-<p>**the first free opensource roblox utility**</p>
+<p>the first free opensource roblox utility</p>
 </div>
 <p align="center">
   <a href="https://chicagosoftworks.github.io/Site/">
