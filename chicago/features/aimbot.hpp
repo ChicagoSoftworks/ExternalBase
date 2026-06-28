@@ -9,6 +9,7 @@
 #include "../rbx/playerdb.hpp"
 #include "../rbx/offsets.hpp"
 #include "../util/loglib.hpp"
+#include "ui.hpp"
 
 namespace aimbot {
 
@@ -277,43 +278,83 @@ inline void draw_fov(vec2 dims) {
 }
 
 inline void render_tab() {
-    ImGui::Checkbox("enabled", &enabled);
-    ImGui::SameLine();
-    ImGui::Checkbox("aim on key", &aim_on_key);
-    if (aim_on_key) {
-        int k = aim_key;
-        ImGui::SameLine();
-        ImGui::Text("key: ");
-        ImGui::SameLine();
-        ImGui::SetNextItemWidth(100);
-        if (ImGui::BeginCombo("##aimkey", aim_key == VK_RBUTTON ? "RMB" : aim_key == VK_LBUTTON ? "LMB" : aim_key == VK_XBUTTON1 ? "XMB1" : "XMB2")) {
-            if (ImGui::Selectable("RMB", aim_key == VK_RBUTTON)) aim_key = VK_RBUTTON;
-            if (ImGui::Selectable("LMB", aim_key == VK_LBUTTON)) aim_key = VK_LBUTTON;
-            if (ImGui::Selectable("XMB1", aim_key == VK_XBUTTON1)) aim_key = VK_XBUTTON1;
-            if (ImGui::Selectable("XMB2", aim_key == VK_XBUTTON2)) aim_key = VK_XBUTTON2;
-            ImGui::EndCombo();
+    ImGui::Spacing();
+
+    // left column
+    ImGui::BeginChild("##aiml", ImVec2(210, 265), false, ImGuiWindowFlags_NoScrollbar);
+
+    ui::section("general", 0.6f);
+    ui::checkbox("enabled", &enabled);
+    if (enabled) {
+        ui::checkbox("aim on key", &aim_on_key);
+        if (aim_on_key) {
+            ImGui::Indent();
+            ui::begin_keybind("##aimkey", &aim_key);
+            ImGui::Unindent();
         }
     }
-    ImGui::Combo("mode", &aim_mode, "camera\0mouse\0");
-    ImGui::Combo("target", &target_bone, "head\0root\0");
-    ImGui::Checkbox("smoothing", &smoothing);
+
+    ui::section("mode", 0.6f);
+    ui::combo("##mode", &aim_mode, "camera\0mouse\0");
+    ImGui::SameLine();
+    ImGui::TextColored(ImVec4(1,1,1,0.7f), "aim type");
+    ImGui::Spacing(); ImGui::Spacing();
+    ui::combo("##bone", &target_bone, "head\0root\0");
+    ImGui::SameLine();
+    ImGui::TextColored(ImVec4(1,1,1,0.7f), "target");
+
+    ui::section("smoothing", 0.6f);
+    ui::checkbox("##sm", &smoothing);
+    ImGui::SameLine();
+    ImGui::TextColored(ImVec4(1,1,1,0.7f), "enabled");
     if (smoothing) {
-        ImGui::SliderFloat("smooth x", &smooth_x, 1.f, 50.f, "%.0f");
-        ImGui::SliderFloat("smooth y", &smooth_y, 1.f, 50.f, "%.0f");
-        ImGui::Combo("easing", &smooth_style, "linear\0quad in\0quad out\0quad in-out\0");
+        ImGui::Indent();
+        ImGui::SetNextItemWidth(80);
+        ui::slider_float("x", &smooth_x, 1.f, 50.f, "%.0f");
+        ImGui::SameLine();
+        ui::slider_float("y", &smooth_y, 1.f, 50.f, "%.0f");
+        ImGui::SameLine();
+        ImGui::TextColored(ImVec4(1,1,1,0.7f), "factor");
+        ui::combo("##ease", &smooth_style, "linear\0quad in\0quad out\0in-out\0");
+        ImGui::Unindent();
     }
-    ImGui::Checkbox("prediction", &prediction);
+
+    ImGui::EndChild();
+    ImGui::SameLine();
+    ImGui::SetCursorPosX(250);
+
+    // right column
+    ImGui::BeginChild("##aimr", ImVec2(225, 265), false, ImGuiWindowFlags_NoScrollbar);
+
+    ui::section("prediction", 0.6f);
+    ui::checkbox("##pred", &prediction);
+    ImGui::SameLine();
+    ImGui::TextColored(ImVec4(1,1,1,0.7f), "enabled");
     if (prediction) {
-        ImGui::SliderFloat("pred x", &pred_x, 0.f, 20.f, "%.0f");
-        ImGui::SliderFloat("pred y", &pred_y, 0.f, 20.f, "%.0f");
+        ImGui::Indent();
+        ImGui::SetNextItemWidth(80);
+        ui::slider_float("x", &pred_x, 0.f, 20.f, "%.0f");
+        ImGui::SameLine();
+        ui::slider_float("y", &pred_y, 0.f, 20.f, "%.0f");
+        ImGui::SameLine();
+        ImGui::TextColored(ImVec4(1,1,1,0.7f), "factor");
+        ImGui::Unindent();
     }
-    ImGui::Checkbox("sticky target", &sticky_target);
-    ImGui::Checkbox("teamcheck", &teamcheck);
-    ImGui::Checkbox("show fov", &show_fov);
+
+    ui::section("targeting", 0.6f);
+    ui::checkbox("sticky target", &sticky_target);
+    ui::checkbox("teamcheck", &teamcheck);
+
+    ui::section("field of view", 0.6f);
+    ui::checkbox("show fov", &show_fov);
     if (show_fov) {
-        ImGui::SliderFloat("fov size", &fov_size, 10.f, 500.f, "%.0f");
-        ImGui::ColorEdit4("fov color", fov_color, ImGuiColorEditFlags_NoInputs);
+        ImGui::Indent();
+        ui::slider_float("size", &fov_size, 10.f, 500.f, "%.0f");
+        ui::color_edit4("color", fov_color);
+        ImGui::Unindent();
     }
+
+    ImGui::EndChild();
 }
 
 }

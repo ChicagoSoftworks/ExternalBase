@@ -137,6 +137,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="chicago.cpp" />
+    <ClCompile Include="elements.cpp" />
     <ClCompile Include="deps\imgui\imgui.cpp" />
     <ClCompile Include="deps\imgui\imgui_draw.cpp" />
     <ClCompile Include="deps\imgui\imgui_tables.cpp" />
@@ -155,12 +156,20 @@
     <ClInclude Include="deps\imgui\imstb_truetype.h" />
     <ClInclude Include="features\esp.hpp" />
     <ClInclude Include="features\overlay.hpp" />
+    <ClInclude Include="features\aimbot.hpp" />
+    <ClInclude Include="features\silent.hpp" />
+    <ClInclude Include="features\exploits.hpp" />
     <ClInclude Include="json.hpp" />
     <ClInclude Include="math\math.hpp" />
     <ClInclude Include="rbx\cache.hpp" />
     <ClInclude Include="rbx\offsets.hpp" />
     <ClInclude Include="rbx\playerdb.hpp" />
+    <ClInclude Include="tphandler\tphandler.hpp" />
+    <ClInclude Include="tphandler\playerhandler.hpp" />
     <ClInclude Include="util\loglib.hpp" />
+    <ClInclude Include="fonts.hpp" />
+    <ClInclude Include="elements.h" />
+    <ClInclude Include="util\texture.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

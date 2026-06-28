@@ -9,7 +9,7 @@
 #include "../math/math.hpp"
 
 struct instance_offsets {
-    uint64_t ChildrenStart, ChildrenEnd, Name;
+    uint64_t ChildrenStart, ChildrenEnd, Name, ClassName;
 };
 
 struct esp_offsets {
@@ -103,6 +103,43 @@ inline bool world_to_screen_clip(vec3 world, vec2 dims, matrix4 view, float& sx,
     sx = (dims.x * 0.5f * clip.x / clip.w) + (dims.x * 0.5f);
     sy = -(dims.y * 0.5f * clip.y / clip.w) + (dims.y * 0.5f);
     return true;
+}
+
+inline float get_humanoid_health(HANDLE proc, uint64_t player_addr, uint64_t model_off, uint64_t humanoid_health_off, instance_offsets ioffs) {
+    uint64_t model = 0;
+    ReadProcessMemory(proc, (LPCVOID)(player_addr + model_off), &model, 8, nullptr);
+    if (!model) return 0.f;
+    uint64_t humanoid_addr = find_child_by_name(proc, model, ioffs, "Humanoid");
+    if (!humanoid_addr) return -1.f;
+    float health = 0.f;
+    ReadProcessMemory(proc, (LPCVOID)(humanoid_addr + humanoid_health_off), &health, 4, nullptr);
+    return health;
+}
+
+inline float get_humanoid_max_health(HANDLE proc, uint64_t player_addr, uint64_t model_off, uint64_t humanoid_max_health_off, instance_offsets ioffs) {
+    uint64_t model = 0;
+    ReadProcessMemory(proc, (LPCVOID)(player_addr + model_off), &model, 8, nullptr);
+    if (!model) return 100.f;
+    uint64_t humanoid_addr = find_child_by_name(proc, model, ioffs, "Humanoid");
+    if (!humanoid_addr) return 100.f;
+    float max_health = 100.f;
+    ReadProcessMemory(proc, (LPCVOID)(humanoid_addr + humanoid_max_health_off), &max_health, 4, nullptr);
+    return max_health > 0.f ? max_health : 100.f;
+}
+
+inline std::string get_tool_name(HANDLE proc, uint64_t player_addr, instance_offsets ioffs, uint64_t model_off) {
+    uint64_t model = 0;
+    ReadProcessMemory(proc, (LPCVOID)(player_addr + model_off), &model, 8, nullptr);
+    if (!model) return {};
+    auto children = get_children(proc, model, ioffs);
+    for (auto& child : children) {
+        std::string cname = read_str(proc, child + ioffs.Name);
+        if (cname.empty()) continue;
+        std::string cls = read_str(proc, child + ioffs.ClassName); // may not be reliable
+        if (cls.find("Tool") != std::string::npos || cls.find("HopperBin") != std::string::npos)
+            return cname;
+    }
+    return {};
 }
 
 inline bool compute_bounds(HANDLE proc, uint64_t player_addr, instance_offsets ioffs, esp_offsets eoffs, vec2 dims, matrix4 view, float& left, float& top, float& right, float& bottom) {

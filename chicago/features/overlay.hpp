@@ -8,6 +8,10 @@
 #include "../deps/imgui/imgui.h"
 #include "../deps/imgui/imgui_impl_win32.h"
 #include "../deps/imgui/imgui_impl_dx11.h"
+#include "../byte.h"
+#include "../elements.h"
+#include "../fonts.hpp"
+#include "../util/texture.hpp"
 
 IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -130,8 +134,34 @@ inline bool init(std::function<void()> cb) {
     ShowWindow(hwnd, SW_SHOW);
     UpdateWindow(hwnd);
     if (!create_device()) return false;
+
+    CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+    tex::load_logo(device);
+
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+
+    ImFontConfig font_config;
+    font_config.PixelSnapH = false;
+    font_config.OversampleH = 5;
+    font_config.OversampleV = 5;
+    font_config.RasterizerMultiply = 1.2f;
+
+    static const ImWchar ranges[] = {
+        0x0020, 0x00FF,
+        0x0400, 0x052F,
+        0x2DE0, 0x2DFF,
+        0xA640, 0xA69F,
+        0xE000, 0xE226,
+        0,
+    };
+    font_config.GlyphRanges = ranges;
+
+    fonts::medium = io.Fonts->AddFontFromMemoryTTF(InterMedium, sizeof(InterMedium), 15.0f, &font_config, ranges);
+    fonts::semibold = io.Fonts->AddFontFromMemoryTTF(InterSemiBold, sizeof(InterSemiBold), 17.0f, &font_config, ranges);
+    fonts::logo = io.Fonts->AddFontFromMemoryTTF(catrine_logo, sizeof(catrine_logo), 17.0f, &font_config, ranges);
+
     ImGui_ImplWin32_Init(hwnd);
     ImGui_ImplDX11_Init(device, ctx);
     render_fn = cb;
@@ -166,6 +196,7 @@ inline bool init(std::function<void()> cb) {
         ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
         swap->Present(1, 0);
     }
+    if (tex::logo_srv) { tex::logo_srv->Release(); tex::logo_srv = nullptr; }
     ImGui_ImplDX11_Shutdown();
     ImGui_ImplWin32_Shutdown();
     ImGui::DestroyContext();

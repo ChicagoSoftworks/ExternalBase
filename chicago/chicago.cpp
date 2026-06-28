@@ -8,6 +8,8 @@
 #include "rbx/cache.hpp"
 #include "features/overlay.hpp"
 #include "features/esp.hpp"
+#include "features/silent.hpp"
+#include "features/exploits.hpp"
 #include "tphandler/tphandler.hpp"
 #include "tphandler/playerhandler.hpp"
 
@@ -40,22 +42,26 @@ int main() {
         if (fake) ReadProcessMemory(proc, (LPCVOID)(fake + offs.FakeDataModel.RealDataModel), &dm, 8, nullptr);
     }
     player_cache pcache;
-    instance_offsets ioff = { offs.Instance.ChildrenStart, offs.Instance.ChildrenEnd, offs.Instance.Name };
+    instance_offsets ioff = { offs.Instance.ChildrenStart, offs.Instance.ChildrenEnd, offs.Instance.Name, offs.Instance.ClassName };
     esp_offsets eoff = { offs.Player.ModelInstance, offs.Model.PrimaryPart, offs.BasePart.Primitive, offs.Primitive.Position, offs.Primitive.Size, offs.Primitive.Rotation, offs.VisualEngine.ViewMatrix, offs.VisualEngine.Dimensions, offs.Player.LocalPlayer };
     std::atomic<bool> tp_flag{ false };
     tp_handler tph;
     player_handler ph;
     aimbot_handler ah;
+    silent_handler sh;
+    exploits_handler eh;
     if (dm) {
         pcache.init(proc, base, &offs, ioff, eoff);
         pcache.force_refresh();
         tph.init(proc, base, &offs, [&] { tp_flag = true; });
         ph.init(proc, base, &offs, ioff);
         ah.init(proc, base, &offs, ioff, eoff);
+        sh.init(proc, base, &offs, ioff, eoff);
+        eh.init(proc, base, &offs, ioff, eoff);
         for (size_t i = 0; i < pcache.count(); i++)
             printf("");
     }
-    loglib::log("dm @ 0x%llx\n", dm); // we MUST know the datamodel address
+    loglib::log("dm @ 0x%llx\n", dm);
     if (dm) {
         overlay::init([&] {
             if (tp_flag.exchange(false))
@@ -67,6 +73,7 @@ int main() {
             if (esp::enabled)
                 esp::draw_boxes(proc, pcache, dims, view, offs.Player.Team);
             aimbot::draw_fov(dims);
+            silent::draw_fov(dims);
             if (overlay::menu)
                 esp::render_menu(pcache);
         });
